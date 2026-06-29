@@ -2,9 +2,9 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
   "name": "com.cross-deck/prism",
   "title": "Prism \u2014 Crossdeck",
-  "description": "Ask your app anything \u2014 revenue, errors, database read-cost, growth \u2014 in plain English, and get rendered charts and dashboards back. An intelligence layer that crosses identity, revenue, entitlements, errors and analytics, so one question can answer which paying customer an error hit and what it costs.",
+  "description": "Ask your app anything \u2014 revenue, errors, read-cost, growth \u2014 and get rendered charts back.",
   "status": "active",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "repository": {
     "url": "https://github.com/CrossDeckHQ/crossdeck-prism",
     "source": "github"
@@ -15,7 +15,7 @@
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "@cross-deck/ai",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "transport": {
         "type": "stdio"
       },

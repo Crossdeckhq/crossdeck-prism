@@ -80,9 +80,6 @@ Use a **secret** key (`cd_sk_`) from your dashboard → API keys — never a pub
 
 Data tools return clean JSON; `draw_user_growth` and `open_moat_dashboard` render interactive charts/dashboards inline in hosts that support MCP Apps (and fall back to a text summary elsewhere).
 
-<!-- SCREENSHOT: docs/assets/moat-dashboard.png  — the open_moat_dashboard rendered card -->
-<!-- SCREENSHOT: docs/assets/user-growth.png     — the draw_user_growth rendered chart -->
-
 ---
 
 ## Tools
