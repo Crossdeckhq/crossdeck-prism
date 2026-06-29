@@ -6,6 +6,7 @@
 
 [![npm version](https://img.shields.io/npm/v/@cross-deck/ai?color=ff6e45&label=%40cross-deck%2Fai)](https://www.npmjs.com/package/@cross-deck/ai)
 [![Smithery](https://smithery.ai/badge/wes-nzl9/crossdeck-prism)](https://smithery.ai/servers/wes-nzl9/crossdeck-prism)
+[![Glama](https://glama.ai/mcp/servers/Crossdeckhq/crossdeck-prism/badges/score.svg)](https://glama.ai/mcp/servers/Crossdeckhq/crossdeck-prism)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![MCP](https://img.shields.io/badge/Model_Context_Protocol-2025--06--18-111)](https://modelcontextprotocol.io)
 [![OAuth 2.1](https://img.shields.io/badge/Auth-OAuth_2.1_%E2%80%A2_PKCE-2ea44f.svg)](#security)
