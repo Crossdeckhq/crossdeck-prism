@@ -71,11 +71,11 @@ export function registerCrossdeckUi(server: McpServer, ctx: ToolContext): void {
     {
       title: "Draw user growth over time",
       description:
-        "Render an interactive line chart of unique visitors and page views over time for a host you own. Use when asked to chart, graph, draw, or visualize growth or traffic for a subdomain. The host must be a verified origin of your project.",
+        "Render an interactive line chart of unique visitors and page views over time for a host you own, and return the period totals as text. Returns a rendered chart in MCP-Apps-capable hosts (a text summary elsewhere) plus the totals. Use when asked to chart, graph, draw, or visualize growth or traffic for a subdomain. The host must be a verified origin of the project, or the request is rejected.",
       inputSchema: {
         project: projectArg,
-        host: z.string().min(1).describe("The host, e.g. 'wes.example.com'."),
-        days: z.number().int().min(1).max(90).optional().describe("Window in days (default 30)."),
+        host: z.string().min(1).describe("The host to chart, e.g. 'wes.example.com'. Must be a verified origin of the selected app."),
+        days: z.number().int().min(1).max(90).optional().describe("Look-back window in days (1–90, default 30)."),
       },
       _meta: { ui: { resourceUri: GROWTH_URI } },
       annotations: RO,
@@ -103,15 +103,15 @@ export function registerCrossdeckUi(server: McpServer, ctx: ToolContext): void {
     {
       title: "Open the cross-layer dashboard",
       description:
-        "Render a customer's cross-layer dashboard — what they pay, their active entitlements, and their database read-cost, joined by identity. Identify the customer by any of userId, anonymousId, customerId, or a rail transaction id.",
+        "Render a customer's cross-layer dashboard — what they pay (monthly), their active entitlements, and their database read-cost, joined by identity — and return the same as a text summary. Returns a rendered dashboard in MCP-Apps-capable hosts (a text summary elsewhere). Identify the customer by ANY ONE of the identifiers below; they all resolve to the same canonical customer. Use when asked to show, open, or visualize a customer's full picture. Returns a no-match result if no customer resolves.",
       inputSchema: {
         project: projectArg,
-        userId: z.string().optional(),
-        anonymousId: z.string().optional(),
-        customerId: z.string().optional(),
-        appleOriginalTransactionId: z.string().optional(),
-        googlePurchaseToken: z.string().optional(),
-        stripeCustomerId: z.string().optional(),
+        userId: z.string().optional().describe("Your own user id for this person — the value you pass to identify() (e.g. 'user_847')."),
+        anonymousId: z.string().optional().describe("A pre-login anonymous/device id captured before sign-in."),
+        customerId: z.string().optional().describe("A Crossdeck customer id ('cdcust_…')."),
+        appleOriginalTransactionId: z.string().optional().describe("Apple StoreKit originalTransactionId for the purchase."),
+        googlePurchaseToken: z.string().optional().describe("Google Play purchase token for the purchase."),
+        stripeCustomerId: z.string().optional().describe("Stripe customer id ('cus_…')."),
       },
       _meta: { ui: { resourceUri: MOAT_URI } },
       annotations: RO,

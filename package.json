@@ -1,8 +1,8 @@
 {
   "name": "@cross-deck/ai",
   "mcpName": "com.cross-deck/prism",
-  "version": "0.3.1",
-  "description": "Prism \u2014 the AI/MCP layer over Crossdeck. Cross your revenue, errors, entitlements and identity in one question: which paying customer did this error hit, and what are they worth versus what they cost? The cross-layer answers no errors, billing, or analytics tool can give alone.",
+  "version": "0.3.2",
+  "description": "Crossdeck AI \u2014 the MCP connector that lets Claude, Cursor, and any AI tool query and operate your Crossdeck app. The product is 'Crossdeck understands your app'; MCP is just the transport.",
   "type": "module",
   "bin": {
     "crossdeck-ai": "dist/server.js"
@@ -19,25 +19,15 @@
     "prepublishOnly": "node scripts/guard-ci-publish.mjs"
   },
   "keywords": [
+    "crossdeck",
     "mcp",
     "model-context-protocol",
-    "error-monitoring",
-    "error-tracking",
-    "observability",
-    "revenue",
-    "mrr",
-    "subscriptions",
-    "entitlements",
-    "identity",
-    "cross-platform",
-    "attribution",
-    "customer-success",
-    "churn",
-    "analytics",
-    "firebase",
+    "ai",
     "claude",
     "cursor",
-    "ai"
+    "analytics",
+    "revenue",
+    "entitlements"
   ],
   "license": "MIT",
   "dependencies": {

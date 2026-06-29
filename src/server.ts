@@ -26,7 +26,7 @@ import { z } from "zod";
 import { registerCrossdeckTools } from "./tools.js";
 import { registerCrossdeckUi } from "./ui.js";
 
-const VERSION = "0.3.1";
+const VERSION = "0.3.2";
 const SECRET_KEY = process.env.CROSSDECK_SECRET_KEY ?? "";
 const API_BASE = process.env.CROSSDECK_API_BASE ?? "https://api.cross-deck.com";
 
