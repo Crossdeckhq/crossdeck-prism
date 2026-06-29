@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
   "name": "com.cross-deck/prism",
   "title": "Prism \u2014 Crossdeck",
-  "description": "Ask your app anything \u2014 revenue, errors, read-cost, growth \u2014 and get rendered charts back.",
+  "description": "Which paying user did an error hit, and what are they worth? Cross revenue, errors & identity.",
   "status": "active",
   "version": "0.3.1",
   "repository": {

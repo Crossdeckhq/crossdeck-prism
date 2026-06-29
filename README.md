@@ -2,7 +2,7 @@
 
 # Prism — Crossdeck's intelligence layer for AI
 
-**Ask your app anything — revenue, errors, database read-cost, growth — in plain English, and get rendered charts and dashboards back.**
+**The AI layer that crosses your revenue, errors, identity and cost — so you can ask which paying customer an error hit, what they're worth, and what they cost you. The cross-layer answer no errors, billing, or analytics tool can give alone.**
 
 [![npm version](https://img.shields.io/npm/v/@cross-deck/ai?color=ff6e45&label=%40cross-deck%2Fai)](https://www.npmjs.com/package/@cross-deck/ai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)

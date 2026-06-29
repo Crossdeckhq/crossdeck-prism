@@ -1,11 +1,34 @@
 {
   "name": "crossdeck-prism",
   "version": "0.3.1",
-  "description": "Ask your app anything — revenue, errors, read-cost, growth — and get rendered charts back.",
-  "author": { "name": "Crossdeck", "url": "https://cross-deck.com" },
+  "description": "Ask which paying customer an error hit and what they're worth \u2014 Prism crosses your revenue, errors, identity and cost in one question.",
+  "author": {
+    "name": "Crossdeck",
+    "url": "https://cross-deck.com"
+  },
   "homepage": "https://cross-deck.com/docs/reporting-api/",
   "repository": "https://github.com/CrossDeckHQ/crossdeck-prism",
   "license": "MIT",
-  "keywords": ["mcp", "model-context-protocol", "analytics", "revenue", "billing", "firebase", "claude", "cursor", "ai", "entitlements"],
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "error-monitoring",
+    "error-tracking",
+    "observability",
+    "revenue",
+    "mrr",
+    "subscriptions",
+    "entitlements",
+    "identity",
+    "cross-platform",
+    "attribution",
+    "customer-success",
+    "churn",
+    "analytics",
+    "firebase",
+    "claude",
+    "cursor",
+    "ai"
+  ],
   "mcpServers": "./.mcp.json"
 }
