@@ -5,6 +5,7 @@
 **The AI layer that crosses your revenue, errors, identity and cost — so you can ask which paying customer an error hit, what they're worth, and what they cost you. The cross-layer answer no errors, billing, or analytics tool can give alone.**
 
 [![npm version](https://img.shields.io/npm/v/@cross-deck/ai?color=ff6e45&label=%40cross-deck%2Fai)](https://www.npmjs.com/package/@cross-deck/ai)
+[![Smithery](https://smithery.ai/badge/wes-nzl9/crossdeck-prism)](https://smithery.ai/servers/wes-nzl9/crossdeck-prism)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![MCP](https://img.shields.io/badge/Model_Context_Protocol-2025--06--18-111)](https://modelcontextprotocol.io)
 [![OAuth 2.1](https://img.shields.io/badge/Auth-OAuth_2.1_%E2%80%A2_PKCE-2ea44f.svg)](#security)
