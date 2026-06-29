@@ -1,0 +1,44 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
+  "name": "com.cross-deck/prism",
+  "title": "Prism \u2014 Crossdeck",
+  "description": "Ask your app anything \u2014 revenue, errors, database read-cost, growth \u2014 in plain English, and get rendered charts and dashboards back. An intelligence layer that crosses identity, revenue, entitlements, errors and analytics, so one question can answer which paying customer an error hit and what it costs.",
+  "status": "active",
+  "version": "0.3.0",
+  "repository": {
+    "url": "https://github.com/CrossDeckHQ/crossdeck-prism",
+    "source": "github"
+  },
+  "websiteUrl": "https://cross-deck.com",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "@cross-deck/ai",
+      "version": "0.3.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "CROSSDECK_SECRET_KEY",
+          "description": "Your Crossdeck secret key (cd_sk_\u2026) from the dashboard \u2192 API keys. Server-side only; never a publishable key.",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "CROSSDECK_API_BASE",
+          "description": "Override the API base URL (e.g. for sandbox). Optional.",
+          "isRequired": false,
+          "isSecret": false
+        }
+      ]
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://api.cross-deck.com/mcp"
+    }
+  ]
+}

@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Crossdeck — Customer cross-match</title>
+<style>
+  :root {
+    --bg: var(--color-background-primary, #ffffff);
+    --fg: var(--color-text-primary, #1a1a1a);
+    --muted: var(--color-text-secondary, #6b7280);
+    --grid: var(--color-border-primary, #e5e7eb);
+    --accent: var(--color-accent-primary, #e8552a);
+    --surface: var(--color-background-secondary, #f7f3ec);
+    --good: var(--color-success, #16a34a);
+    font-family: var(--font-family-base, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); padding: 16px; }
+  h1 { font-size: 15px; font-weight: 650; margin: 0 0 2px; }
+  .who { color: var(--muted); font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .sentence { background: var(--surface); border: 1px solid var(--grid); border-radius: 10px;
+    padding: 12px 14px; margin: 14px 0; font-size: 15px; line-height: 1.5; }
+  .sentence b { font-weight: 680; }
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .card { background: var(--surface); border: 1px solid var(--grid); border-radius: 10px; padding: 12px 14px; }
+  .card .label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .card .value { font-size: 24px; font-weight: 680; letter-spacing: -0.01em; margin-top: 4px; }
+  .card .note { color: var(--muted); font-size: 11px; margin-top: 3px; }
+  .pill { display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--grid); }
+  .pill.paying { color: var(--good); border-color: var(--good); }
+  .foot { color: var(--muted); font-size: 11px; margin-top: 12px; }
+  .empty { color: var(--muted); font-size: 13px; padding: 28px 0; text-align: center; }
+</style>
+</head>
+<body>
+  <h1 id="title">Customer cross-match</h1>
+  <div class="who" id="who"></div>
+  <div id="body"></div>
+
+<script>
+(function () {
+  "use strict";
+  function money(cents) {
+    if (cents == null) return "—";
+    return "$" + (cents / 100).toLocaleString(undefined, { minimumFractionDigits: cents % 100 ? 2 : 0, maximumFractionDigits: 2 });
+  }
+  function num(n) {
+    if (n == null) return "—";
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + "M";
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + "k";
+    return String(n);
+  }
+
+  function render(payload) {
+    var d = (payload && payload.data) ? payload.data : payload || {};
+    var body = document.getElementById("body");
+    if (!d || d === null || (!d.customer && !d.revenue && !d.readCost)) {
+      document.getElementById("who").textContent = "";
+      body.innerHTML = '<div class="empty">No customer matched that identifier.</div>';
+      return;
+    }
+    var cust = d.customer || {};
+    var rev = d.revenue || {};
+    var ent = d.entitlements || {};
+    var rc = d.readCost || null;
+
+    document.getElementById("who").textContent = cust.crossdeckCustomerId || "";
+
+    // The sentence only Crossdeck can produce — the moat, in words.
+    var paysPart = rev.paying ? ("pays <b>" + money(rev.monthlyCents) + "/mo</b>") : "is <b>not paying</b>";
+    var entPart = "holds <b>" + (ent.active != null ? ent.active : 0) + "</b> entitlement" + (ent.active === 1 ? "" : "s");
+    var costPart = rc ? ("cost you <b>" + num(rc.reads) + " reads</b> in the last " + rc.windowDays + " days") : "has no attributed read-cost in range";
+    document.getElementById("title").textContent = "Customer cross-match";
+
+    var sentence = '<div class="sentence">This customer ' + paysPart + ", " + entPart + ", and " + costPart + ".</div>";
+
+    var cards =
+      '<div class="cards">' +
+        '<div class="card"><div class="label">Revenue</div><div class="value">' + money(rev.monthlyCents) +
+          '</div><div class="note">' + (rev.paying ? '<span class="pill paying">paying</span>' : '<span class="pill">free</span>') + '</div></div>' +
+        '<div class="card"><div class="label">Entitlements</div><div class="value">' + (ent.active != null ? ent.active : 0) +
+          '</div><div class="note">active</div></div>' +
+        '<div class="card"><div class="label">Read-cost</div><div class="value">' + (rc ? num(rc.reads) : "—") +
+          '</div><div class="note">' + (rc ? ("last " + rc.windowDays + "d") : "n/a") + '</div></div>' +
+      '</div>';
+
+    body.innerHTML = sentence + cards +
+      '<div class="foot">Revenue × entitlements × read-cost, joined by identity — the cross-layer view only Crossdeck can produce.</div>';
+  }
+
+  function applyTheme(hostContext) {
+    if (!hostContext) return;
+    var vars = (hostContext.styles && hostContext.styles.variables) || {};
+    var root = document.documentElement;
+    Object.keys(vars).forEach(function (k) { root.style.setProperty(k.charAt(0) === "-" ? k : ("--" + k), vars[k]); });
+    if (hostContext.theme) { root.setAttribute("data-theme", hostContext.theme); root.style.colorScheme = hostContext.theme; }
+  }
+  function onResult(r) { render(r && r.structuredContent ? r.structuredContent : r); }
+  window.addEventListener("message", function (ev) {
+    var m = ev.data || {};
+    if (m.result && m.result.hostContext) applyTheme(m.result.hostContext);
+    if (m.method === "ui/notifications/host-context-changed" && m.params) applyTheme(m.params);
+    if (m.method === "ui/notifications/tool-input" && m.params && m.params.structuredContent) onResult(m.params);
+    if (m.method === "ui/notifications/tool-result" && m.params) onResult(m.params);
+  });
+  if (window.__CROSSDECK_DATA__) render(window.__CROSSDECK_DATA__);
+  try { parent.postMessage({ jsonrpc: "2.0", id: 1, method: "ui/initialize", params: { clientInfo: { name: "crossdeck-moat-dashboard", version: "1.0.0" } } }, "*"); } catch (e) {}
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+# Smithery descriptor — https://smithery.ai/docs
+# Prism runs locally over stdio with a Crossdeck secret key. A hosted, OAuth-protected
+# remote is also available at https://api.cross-deck.com/mcp (no key to paste).
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    required:
+      - crossdeckSecretKey
+    properties:
+      crossdeckSecretKey:
+        type: string
+        title: Crossdeck secret key
+        description: A secret key (cd_sk_…) from your Crossdeck dashboard → API keys. Server-side only — never a publishable (cd_pub_) key.
+      crossdeckApiBase:
+        type: string
+        title: API base URL (optional)
+        description: Override the API base, e.g. for sandbox.
+  commandFunction: |
+    (config) => ({
+      command: 'crossdeck-ai',
+      env: Object.assign(
+        { CROSSDECK_SECRET_KEY: config.crossdeckSecretKey },
+        config.crossdeckApiBase ? { CROSSDECK_API_BASE: config.crossdeckApiBase } : {}
+      )
+    })
+  exampleConfig:
+    crossdeckSecretKey: cd_sk_live_xxxxxxxxxxxxxxxxxxxxxxxx

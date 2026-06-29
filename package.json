@@ -1,0 +1,41 @@
+{
+  "name": "@cross-deck/ai",
+  "version": "0.3.0",
+  "description": "Crossdeck AI — the MCP connector that lets Claude, Cursor, and any AI tool query and operate your Crossdeck app. The product is 'Crossdeck understands your app'; MCP is just the transport.",
+  "type": "module",
+  "bin": {
+    "crossdeck-ai": "dist/server.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc && node -e \"require('fs').cpSync('ui','dist/ui',{recursive:true})\"",
+    "start": "node dist/server.js",
+    "test": "node --test dist/*.test.js",
+    "dev": "tsc --watch",
+    "prepublishOnly": "node scripts/guard-ci-publish.mjs"
+  },
+  "keywords": [
+    "crossdeck",
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "claude",
+    "cursor",
+    "analytics",
+    "revenue",
+    "entitlements"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/ext-apps": "^1.7.4",
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "typescript": "^5.5.0"
+  }
+}
