@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "crossdeck-prism": {
+      "command": "npx",
+      "args": ["-y", "@cross-deck/ai"],
+      "env": {
+        "CROSSDECK_SECRET_KEY": "${CROSSDECK_SECRET_KEY}"
+      }
+    }
+  }
+}
