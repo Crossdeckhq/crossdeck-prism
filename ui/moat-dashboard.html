@@ -64,13 +64,18 @@
     var rev = d.revenue || {};
     var ent = d.entitlements || {};
     var rc = d.readCost || null;
+    // read-cost can be present but NOT instrumented (customer has no SDK
+    // identity to attribute to) — reads is null then. Never render that as 0.
+    var rcMeasured = !!(rc && rc.reads !== null && rc.reads !== undefined);
 
     document.getElementById("who").textContent = cust.crossdeckCustomerId || "";
 
     // The sentence only Crossdeck can produce — the moat, in words.
     var paysPart = rev.paying ? ("pays <b>" + money(rev.monthlyCents) + "/mo</b>") : "is <b>not paying</b>";
     var entPart = "holds <b>" + (ent.active != null ? ent.active : 0) + "</b> entitlement" + (ent.active === 1 ? "" : "s");
-    var costPart = rc ? ("cost you <b>" + num(rc.reads) + " reads</b> in the last " + rc.windowDays + " days") : "has no attributed read-cost in range";
+    var costPart = rcMeasured
+      ? ("cost you <b>" + num(rc.reads) + " reads</b> in the last " + rc.windowDays + " days")
+      : "isn't wired for read-cost attribution yet (a blind spot, not zero)";
     document.getElementById("title").textContent = "Customer cross-match";
 
     var sentence = '<div class="sentence">This customer ' + paysPart + ", " + entPart + ", and " + costPart + ".</div>";
@@ -81,8 +86,8 @@
           '</div><div class="note">' + (rev.paying ? '<span class="pill paying">paying</span>' : '<span class="pill">free</span>') + '</div></div>' +
         '<div class="card"><div class="label">Entitlements</div><div class="value">' + (ent.active != null ? ent.active : 0) +
           '</div><div class="note">active</div></div>' +
-        '<div class="card"><div class="label">Read-cost</div><div class="value">' + (rc ? num(rc.reads) : "—") +
-          '</div><div class="note">' + (rc ? ("last " + rc.windowDays + "d") : "n/a") + '</div></div>' +
+        '<div class="card"><div class="label">Read-cost</div><div class="value">' + (rcMeasured ? num(rc.reads) : "—") +
+          '</div><div class="note">' + (rcMeasured ? ("last " + rc.windowDays + "d") : "not instrumented") + '</div></div>' +
       '</div>';
 
     body.innerHTML = sentence + cards +

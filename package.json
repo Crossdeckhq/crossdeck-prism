@@ -1,7 +1,7 @@
 {
   "name": "@cross-deck/ai",
   "mcpName": "com.cross-deck/prism",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "description": "Crossdeck AI — the MCP connector that lets Claude, Cursor, and any AI tool query and operate your Crossdeck app. The product is 'Crossdeck understands your app'; MCP is just the transport.",
   "type": "module",
   "bin": {
@@ -9,14 +9,16 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "tsc && node -e \"require('fs').cpSync('ui','dist/ui',{recursive:true})\"",
     "start": "node dist/server.js",
     "test": "node --test dist/*.test.js",
     "dev": "tsc --watch",
-    "prepublishOnly": "node scripts/guard-ci-publish.mjs"
+    "prepublishOnly": "node scripts/guard-ci-publish.mjs",
+    "eval": "node eval/misinterpretation.mjs"
   },
   "keywords": [
     "crossdeck",
@@ -38,5 +40,14 @@
   "devDependencies": {
     "@types/node": "^20.19.43",
     "typescript": "^5.5.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CrossDeckHQ/crossdeck-prism.git"
+  },
+  "homepage": "https://cross-deck.com",
+  "bugs": {
+    "url": "https://github.com/CrossDeckHQ/crossdeck-prism/issues",
+    "email": "support@cross-deck.com"
   }
 }

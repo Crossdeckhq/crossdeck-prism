@@ -1,10 +1,10 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
   "name": "com.cross-deck/prism",
-  "title": "Prism \u2014 Crossdeck",
-  "description": "Ask your app anything \u2014 revenue, errors, read-cost, growth \u2014 and get rendered charts back.",
+  "title": "Prism — Crossdeck",
+  "description": "Ask your app anything — revenue, errors, read-cost, growth — and get rendered charts back.",
   "status": "active",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "repository": {
     "url": "https://github.com/CrossDeckHQ/crossdeck-prism",
     "source": "github"
@@ -15,14 +15,14 @@
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "@cross-deck/ai",
-      "version": "0.3.3",
+      "version": "0.4.0",
       "transport": {
         "type": "stdio"
       },
       "environmentVariables": [
         {
           "name": "CROSSDECK_SECRET_KEY",
-          "description": "Your Crossdeck secret key (cd_sk_\u2026) from the dashboard \u2192 API keys. Server-side only; never a publishable key.",
+          "description": "Your Crossdeck secret key (cd_sk_…) from the dashboard → API keys. Server-side only; never a publishable key.",
           "isRequired": true,
           "isSecret": true
         },

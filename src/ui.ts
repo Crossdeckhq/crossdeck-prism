@@ -59,10 +59,32 @@ const RO = { readOnlyHint: true } as const;
 const GROWTH_URI = "ui://crossdeck/user-growth";
 const MOAT_URI = "ui://crossdeck/moat-dashboard";
 
+// Content-Security-Policy for the rendered widgets, declared on the resource
+// content's `_meta` (Apps SDK). WITHOUT this, ChatGPT's sandbox shows the orange
+// "CSP off" badge and blocks the widget's inline chart script, so nothing draws.
+// Our widgets are fully self-contained — inline HTML/CSS/SVG + JSON-RPC over
+// postMessage, ZERO outbound fetch — so connect domains are empty; we allow
+// OpenAI's own static host for the Apps runtime the host injects into the iframe
+// (matches OpenAI's reference example). Declared in BOTH the standard `ui.csp`
+// (camelCase, preferred) and the legacy `openai/widgetCSP` (snake_case) forms so
+// the CSP is honoured across ChatGPT / Apps-SDK versions.
+const WIDGET_CSP_META = {
+  ui: {
+    csp: {
+      connectDomains: [] as string[],
+      resourceDomains: ["https://*.oaistatic.com"],
+    },
+  },
+  "openai/widgetCSP": {
+    connect_domains: [] as string[],
+    resource_domains: ["https://*.oaistatic.com"],
+  },
+};
+
 export function registerCrossdeckUi(server: McpServer, ctx: ToolContext): void {
   // ── User-growth chart ──────────────────────────────────────────────────
   registerAppResource(server, GROWTH_URI, GROWTH_URI, { mimeType: RESOURCE_MIME_TYPE }, async () => ({
-    contents: [{ uri: GROWTH_URI, mimeType: RESOURCE_MIME_TYPE, text: html("user-growth.html") }],
+    contents: [{ uri: GROWTH_URI, mimeType: RESOURCE_MIME_TYPE, text: html("user-growth.html"), _meta: WIDGET_CSP_META }],
   }));
 
   registerAppTool(
@@ -94,7 +116,7 @@ export function registerCrossdeckUi(server: McpServer, ctx: ToolContext): void {
 
   // ── Cross-layer customer dashboard (the moat, rendered) ────────────────
   registerAppResource(server, MOAT_URI, MOAT_URI, { mimeType: RESOURCE_MIME_TYPE }, async () => ({
-    contents: [{ uri: MOAT_URI, mimeType: RESOURCE_MIME_TYPE, text: html("moat-dashboard.html") }],
+    contents: [{ uri: MOAT_URI, mimeType: RESOURCE_MIME_TYPE, text: html("moat-dashboard.html"), _meta: WIDGET_CSP_META }],
   }));
 
   registerAppTool(

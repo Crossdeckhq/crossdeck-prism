@@ -29,6 +29,28 @@ That's the moat sentence. Prism gives it a voice in Claude, ChatGPT, Cursor, or 
 
 ---
 
+## Permissions & data access
+
+**Secure, read-only access to your live Crossdeck workspace.** Prism reads; it never writes.
+
+**Prism can see** (the layers Crossdeck already owns about your app):
+
+| | |
+|---|---|
+| 💷 **Revenue** | MRR, paying-customer counts, per-rail split |
+| 🐛 **Errors** | issues, blast radius, who was affected |
+| 📈 **Analytics** | per-host page views, unique visitors, top pages/referrers |
+| 🗄️ **Read-cost** | per-user-vs-overhead database reads, by operation |
+| 🧭 **Customer journeys** | the cross-layer view of one customer (pay × entitlements × cost) |
+
+Row-level **customer identity** is returned only when your connection was explicitly granted that scope — otherwise Prism answers from aggregates and tells you so. That boundary is enforced by Crossdeck, not left to the model.
+
+**Prism cannot** create, modify, delete, or configure anything in your projects. There is no write path — every tool is read-only (`readOnlyHint: true`). Ask it to change something and it will tell you it can't.
+
+Data is fetched live at question time over an OAuth-protected endpoint; the connector stores nothing.
+
+---
+
 ## Connect in 60 seconds
 
 ### Remote (recommended) — one-click OAuth, no keys to paste
@@ -49,15 +71,15 @@ Or open your dashboard at **app.cross-deck.com → Developers → Prism → Conn
 
 ### Local (Claude Desktop / Cursor / Claude Code) — stdio + a secret key
 
-```bash
-npm install -g @cross-deck/ai
-```
+No install step — `npx` fetches the package **and its dependencies** on each launch, so it
+self-heals and stays current (nothing local to go stale):
 
 ```json
 {
   "mcpServers": {
     "crossdeck": {
-      "command": "crossdeck-ai",
+      "command": "npx",
+      "args": ["-y", "@cross-deck/ai"],
       "env": { "CROSSDECK_SECRET_KEY": "cd_sk_live_…" }
     }
   }
@@ -65,6 +87,21 @@ npm install -g @cross-deck/ai
 ```
 
 Use a **secret** key (`cd_sk_`) from your dashboard → API keys — never a publishable (`cd_pub_`) one. `CROSSDECK_API_BASE` overrides the endpoint (e.g. sandbox).
+
+> **If the connector shows "failed" / "Server disconnected" — two known causes, both fixable:**
+>
+> 1. **`spawn npx ENOENT` / command not found.** Desktop clients launch with a *minimal*
+>    PATH that often excludes your Node bin (common with `nvm`). Fix: use the **absolute
+>    path** to `npx` as `command` — run `which npx` and paste the full path (e.g.
+>    `/Users/you/.nvm/versions/node/vX/bin/npx`).
+> 2. **`ERR_MODULE_NOT_FOUND … @modelcontextprotocol/sdk`.** This only happens if `args`
+>    points at a **hand-built local checkout** (`…/dist/server.js`) — that folder's
+>    `node_modules` can be cleaned out from under you (e.g. anything under `/tmp`). Fix:
+>    **never point at a local build.** Let `npx -y @cross-deck/ai` (above) resolve the
+>    published package, so its dependencies are always present.
+>
+> Simplest of all: use the **remote connector** at the top of this section — it runs no
+> local Node at all, so neither failure can occur.
 
 ---
 
@@ -84,14 +121,18 @@ Data tools return clean JSON; `draw_user_growth` and `open_moat_dashboard` rende
 
 ## Tools
 
-Eleven tools — all **read-only** (`readOnlyHint`), each with a human-readable `title`, scoped/paginated output, and actionable errors. Every read is a point-read of a maintained ledger, so **asking questions never runs up your database bill.**
+Thirteen tools — all **read-only** (`readOnlyHint`), each with a human-readable `title`, scoped/paginated output, and actionable errors. Every read is a point-read of a maintained ledger, so **asking questions never runs up your database bill.**
+
+Every number is **self-describing**: values come back with a `meta.semantics` briefing and a `coverage` state, so a metric is reported as exactly what it is, and a blind spot (`not_instrumented`) is never mistaken for a real zero.
 
 **Portfolio**
 - `list_projects` — list every app this connector can read (your portfolio).
+- `get_portfolio` — the coverage map: for each app, which surfaces are instrumented vs a blind spot. Load it first so a later blank reads as a known blind spot, not a fact.
 - `use_project` — set the current app for subsequent tools ("switch to <app>").
 
 **Revenue & cost**
 - `get_revenue` — MRR, paying-customer count, per-rail split (Stripe/Apple/Google), optional daily trend.
+- `get_customers` — the customer census: the paying-customer count (plus total / active where instrumented). The canonical "how many customers does this app have" answer.
 - `get_read_cost` — database read-cost split into per-user reads vs un-attributed overhead, by operation.
 
 **The moat — error × identity × revenue**

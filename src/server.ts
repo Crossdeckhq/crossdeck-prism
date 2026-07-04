@@ -25,8 +25,9 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { registerCrossdeckTools } from "./tools.js";
 import { registerCrossdeckUi } from "./ui.js";
+import { CONNECTOR_INSTRUCTIONS } from "./instructions.js";
 
-const VERSION = "0.3.3";
+const VERSION = "0.4.0";
 const SECRET_KEY = process.env.CROSSDECK_SECRET_KEY ?? "";
 const API_BASE = process.env.CROSSDECK_API_BASE ?? "https://api.cross-deck.com";
 
@@ -34,7 +35,10 @@ function log(msg: string): void {
   process.stderr.write(`[crossdeck-ai] ${msg}\n`);
 }
 
-const server = new McpServer({ name: "crossdeck-ai", version: VERSION });
+const server = new McpServer(
+  { name: "crossdeck-ai", version: VERSION },
+  { instructions: CONNECTOR_INSTRUCTIONS },
+);
 
 // The stdio build authenticates with a secret key from the environment; the
 // tool layer takes an auth resolver so the HTTP/OAuth build can swap in a

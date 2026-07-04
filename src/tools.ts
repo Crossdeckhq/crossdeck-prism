@@ -63,8 +63,20 @@ async function cdGet(
     const body = (await res.json().catch(() => ({}))) as { data?: unknown; meta?: unknown; error?: { code?: string; message?: string } };
     if (!res.ok) {
       if (res.status === 429) return fail(`Crossdeck rate limit reached. Wait briefly and retry. ${body.error?.message ?? ""}`.trim());
-      if (res.status === 401) return fail("Crossdeck rejected the credentials — reconnect the connector.");
-      if (res.status === 403) return fail(`Not permitted: ${body.error?.message ?? "this resource is outside your scope."}`);
+      if (res.status === 401) return fail("Crossdeck rejected the credentials — the sign-in has expired or been revoked. Reconnect the connector to continue.");
+      if (res.status === 403) {
+        const code = body.error?.code;
+        // The signature moment: a permission boundary respected, not ignored.
+        // When the connection lacks identity/customer-level access, say so
+        // plainly AND offer the aggregate path — the boundary working as
+        // intended, with a useful fallback rather than a dead end.
+        if (code === "insufficient_scope" || code === "identity_tier_disabled") {
+          return fail(
+            "This workspace hasn't granted customer-identity access to this connection, so I can't return row-level identity data (that boundary is enforced by Crossdeck, not optional). I can still answer from AGGREGATE surfaces — revenue, errors, analytics, and read-cost — using the tools that don't need identity. Want me to answer that way?",
+          );
+        }
+        return fail(`Not permitted: ${body.error?.message ?? "this resource is outside your connection's scope."}`);
+      }
       if (body.error?.code === "missing_required_param" && body.error?.message?.includes("project")) {
         return fail("Which app? With a workspace key you must pick a project. Call list_projects, then use_project (or pass `project`).");
       }
@@ -94,6 +106,18 @@ export function registerCrossdeckTools(server: McpServer, ctx: ToolContext): voi
   );
 
   server.registerTool(
+    "get_portfolio",
+    {
+      title: "Get the portfolio coverage map",
+      description:
+        "The coverage manifest — LOAD THIS FIRST (workspace key). For every app it returns which surfaces are instrumented vs a blind spot: coverage.revenue / readCost / analytics / userCensus, each 'measured' or 'not_instrumented'. Use it to interpret every later number: if an app's readCost is 'not_instrumented' here, a blank read-cost for it later is a KNOWN blind spot, not a real zero. Prevents reporting an un-wired surface as fact.",
+      inputSchema: {},
+      annotations: RO,
+    },
+    async () => cdGet(ctx, "/v1/workspace/coverage", {}),
+  );
+
+  server.registerTool(
     "use_project",
     {
       title: "Select the current app",
@@ -114,7 +138,7 @@ export function registerCrossdeckTools(server: McpServer, ctx: ToolContext): voi
     {
       title: "Get revenue",
       description:
-        "Get an app's recurring revenue from its maintained revenue ledger (a point-read, never a scan). Returns MRR in cents, the paying-customer count, and the per-rail split across Stripe, Apple, and Google; with granularity='day' it adds a daily time series over the window. Use for 'what's our MRR', 'how many paying customers', or revenue-trend questions. An app with no revenue yet returns zeros, not an error.",
+        "Get an app's recurring revenue from its maintained revenue ledger (a point-read, never a scan). Returns MRR in cents, the paying-customer count, and the per-rail split across Stripe, Apple, and Google. With granularity='day' it adds a daily MRR time series (`data.series`, oldest→newest) — pass days to set the window (e.g. days=56 for 8 weeks) and use it to answer 'is my MRR up or down over time', 'MRR history', or any trend question. Use also for 'what's our MRR' or 'how many paying customers'. An app with no payment rail connected returns `not_instrumented` (check data.coverage.state) — that is NOT $0 earned. For a broader customer census (total / active people, not just paying), call get_customers.",
       inputSchema: {
         project: projectArg,
         granularity: z.enum(["total", "day"]).optional().describe("How to aggregate: 'total' (default) = the latest snapshot; 'day' = a daily time series across the window."),
@@ -125,13 +149,26 @@ export function registerCrossdeckTools(server: McpServer, ctx: ToolContext): voi
     async ({ project, granularity, days }) => cdGet(ctx, "/v1/revenue", { project: resolveProject(project), granularity, days }),
   );
 
+  // ── Customer census ────────────────────────────────────────────────────────────
+  server.registerTool(
+    "get_customers",
+    {
+      title: "Get the customer count",
+      description:
+        "The canonical count of an app's customers, sourced from the revenue + identity ledgers — use THIS for 'how many users/customers does this app have', NOT get_read_cost (whose attributedActors is a cost artifact, not a user count). Returns payingCustomers (distinct customers with an active subscription — a real point-read), plus totalCustomers and activePeople. Each is state-tagged in data.coverage.<field>.state: payingCustomers is `measured`; totalCustomers and activePeople are `not_instrumented` today (Crossdeck doesn't maintain those counters yet — the response says so, and null there is NOT zero). Read the coverage state before reporting any of them.",
+      inputSchema: { project: projectArg },
+      annotations: RO,
+    },
+    async ({ project }) => cdGet(ctx, "/v1/customers", { project: resolveProject(project) }),
+  );
+
   // ── Read-cost ──────────────────────────────────────────────────────────────────
   server.registerTool(
     "get_read_cost",
     {
       title: "Get database read-cost",
       description:
-        "Get an app's database read-cost over the last `days` days, split into per-user reads vs un-attributed overhead, plus a breakdown by operation. Per-user attribution works because Crossdeck joins read-cost to the SDK's identity, so you can see which operations drive the bill. Returns the per-user-vs-overhead totals and the by-operation breakdown. Use for 'what's driving our database reads' or 'which operation costs the most'.",
+        "Get an app's database read-cost over the last `days` days: total metered reads split into per-user reads vs un-attributed overhead, plus the breakdown by operation. `attributedActors` counts the distinct actor keys the SDK labelled during cost reporting — it INCLUDES background/service actors and is NOT a user or customer count (for that, call get_customers or get_revenue). Server-side reads only (excludes the outbound API + iOS). When an app has no read-cost attribution the fields come back `not_instrumented` (a blind spot), not 0 — check data.coverage.state. Use for 'what's driving our database reads' or 'which operation costs the most'.",
       inputSchema: { project: projectArg, days: z.number().int().min(1).max(90).optional().describe("Look-back window in days (1–90, default 30).") },
       annotations: RO,
     },
@@ -166,6 +203,56 @@ export function registerCrossdeckTools(server: McpServer, ctx: ToolContext): voi
       annotations: RO,
     },
     async ({ project, fingerprint, limit }) => cdGet(ctx, "/v1/errors/affected", { project: resolveProject(project), fingerprint, limit }),
+  );
+
+  // ── The moat leaderboard: pivot the customer book by an owned axis ────────────
+  server.registerTool(
+    "list_customers_ranked",
+    {
+      title: "Rank customers by read-cost or revenue",
+      description:
+        "Pivot the whole customer book by an axis Crossdeck owns and rank it — the cross-layer question no single tool answers: 'which paying customers cost me the most in database reads?'. by='read_cost' ranks by metered reads over the window; by='mrr' ranks by monthly revenue. Filter with segment='paying'|'non_paying'|'all'. Each row carries your own user id, monthly revenue (cents), paying flag, and read-cost — joined by identity. Rows are your own identifiers only, never emails/names. Read-cost that isn't instrumented comes back as coverage.state='not_instrumented' (a blind spot), never a misleading empty ranking. Use for 'who are my most expensive paying users' or 'top customers by revenue'.",
+      inputSchema: {
+        project: projectArg,
+        by: z.enum(["read_cost", "mrr"]).optional().describe("Ranking axis: 'read_cost' (metered reads, default) or 'mrr' (monthly revenue)."),
+        segment: z.enum(["paying", "non_paying", "all"]).optional().describe("Which customers to include (default 'all')."),
+        limit: z.number().int().min(1).max(100).optional().describe("Rows to return (1–100, default 25), highest-ranked first."),
+        days: z.number().int().min(1).max(90).optional().describe("Read-cost look-back window in days (1–90, default 30)."),
+      },
+      annotations: RO,
+    },
+    async ({ project, by, segment, limit, days }) => cdGet(ctx, "/v1/customers/ranked", { project: resolveProject(project), by, segment, limit, days }),
+  );
+
+  // ── Revenue averages: ARPU + lifetime value per paying customer ──────────────
+  server.registerTool(
+    "get_revenue_averages",
+    {
+      title: "Get ARPU and average lifetime value",
+      description:
+        "Get an app's revenue AVERAGES from maintained ledgers (point-reads, no scan): ARPU (avg MRR per paying customer) and average lifetime value per paying customer. Lifetime value = combinedLifetimeValueCents (all customers' LTV: active-subscription annualized run-rate + banked one-offs) — it RECONCILES to the dashboard's per-customer LTV and is NOT the same as recognisedCashToDateCents (actual cash banked), which is returned separately. Answers 'average lifetime value per user' and 'what's my ARPU'. Averages are ACROSS THE PAYING BASE — NOT any one customer's pay (use get_customer for one). 'user' = paying customer here; a per-all-users average is not_instrumented. `not_instrumented` when no revenue rail is connected — not $0.",
+      inputSchema: {
+        project: projectArg,
+      },
+      annotations: RO,
+    },
+    async ({ project }) => cdGet(ctx, "/v1/revenue/averages", { project: resolveProject(project) }),
+  );
+
+  // ── Acquisition: signups by first-touch source ───────────────────────────────
+  server.registerTool(
+    "get_acquisition",
+    {
+      title: "Get signups by acquisition source",
+      description:
+        "Answer 'what's my biggest signup source?'. Returns new customers grouped by their TRUE first-touch source — the referrer/utm on their earliest anonymous visit (e.g. chatgpt.com, google), carried forward to the customer at signup, NOT the signup-moment referrer. Counts only, highest-first. Forward-only: coverage.state='not_instrumented' means no signups have been attributed since first-touch tracking shipped, NOT zero signups historically. Use for acquisition-channel and signup-source questions.",
+      inputSchema: {
+        project: projectArg,
+        limit: z.number().int().min(1).max(100).optional().describe("Max sources to return (1–100, default 25), highest signups first."),
+      },
+      annotations: RO,
+    },
+    async ({ project, limit }) => cdGet(ctx, "/v1/acquisition", { project: resolveProject(project), limit }),
   );
 
   // ── Customer cross-match (the moat, one person) ──────────────────────────────

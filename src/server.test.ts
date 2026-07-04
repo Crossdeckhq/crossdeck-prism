@@ -42,8 +42,9 @@ const INITED = { jsonrpc: "2.0", method: "notifications/initialized" };
 test("every tool has title + readOnlyHint (hard gate)", async () => {
   const r = await rpc([INIT, INITED, { jsonrpc: "2.0", id: 2, method: "tools/list" }]);
   const tools = r.get(2).result.tools as any[];
-  // 8 data/UI tools + list_projects + use_project + get_error_affected_users (0.3.0 multi-app).
-  assert.equal(tools.length, 11, "expected 11 tools");
+  // 14 data tools (tools.ts) + 2 UI app tools (ui.ts: draw_user_growth,
+  // open_moat_dashboard) = 16. Bump this when a tool is added/removed.
+  assert.equal(tools.length, 16, "expected 16 tools");
   for (const t of tools) {
     assert.ok(t.title && t.title.length <= 64, `${t.name} needs a title ≤64`);
     assert.equal(t.annotations?.readOnlyHint, true, `${t.name} needs readOnlyHint`);
