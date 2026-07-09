@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "crossdeck": {
+      "url": "https://api.cross-deck.com/mcp"
+    }
+  }
+}
