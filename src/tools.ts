@@ -122,7 +122,7 @@ export function registerCrossdeckTools(server: McpServer, ctx: ToolContext): voi
     {
       title: "Select the current app",
       description:
-        "Set the current app for this conversation so later tools default to it without repeating `project`. Behaves as session state: it persists until you call this again and applies to every subsequent tool call. Returns { currentProject } — the project id now in effect. Use when the user says 'switch to <app>' or names an app to focus on; call list_projects first for valid ids. No effect with a single-app key (the project is fixed).",
+        "Read-only. Selects which app subsequent tools read from — it changes NOTHING in your Crossdeck account and writes no data; think of it as `cd` for the conversation. Sets the current app so later tools default to it without repeating `project`. Behaves as session state: it persists until you call this again and applies to every subsequent tool call. Returns { currentProject } — the project id now in effect. Use when the user says 'switch to <app>' or names an app to focus on; call list_projects first for valid ids. No effect with a single-app key (the project is fixed).",
       inputSchema: { project: z.string().min(1).describe("The project id to make current, copied from list_projects (e.g. 'proj_3a8f137bccdd4f').") },
       annotations: RO,
     },
