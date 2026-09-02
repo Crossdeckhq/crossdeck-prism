@@ -12,6 +12,8 @@
 
 *"Which paying customer did this crash hit, and how much revenue is at risk?" — one question, answered across error, identity, and revenue. No single-layer tool can do that.*
 
+[**What Prism does →**](https://cross-deck.com/prism/) · [Developer docs](https://cross-deck.com/docs/prism/) · [Crossdeck](https://cross-deck.com)
+
 </div>
 
 ---
