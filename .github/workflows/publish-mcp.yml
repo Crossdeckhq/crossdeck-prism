@@ -69,9 +69,18 @@ jobs:
       - name: Verify the registry serves this version
         run: |
           EXPECTED=$(jq -r '.version' server.json)
-          sleep 10
-          LIVE=$(curl -fsSL "https://registry.modelcontextprotocol.io/v0/servers?search=com.cross-deck/prism" \
-            | jq -r '.servers[0].server.version // "none"')
+          # `search` alone returns EVERY published version, unsorted — reading
+          # servers[0] picked up the OLDEST and reported a false failure on a
+          # publish that had actually succeeded. `version=latest` returns the
+          # one current entry, which is the thing we mean by "live".
+          LIVE=none
+          for i in 1 2 3 4 5 6; do
+            LIVE=$(curl -fsSL "https://registry.modelcontextprotocol.io/v0/servers?search=com.cross-deck/prism&version=latest" \
+              | jq -r '.servers[0].server.version // "none"')
+            [ "$LIVE" = "$EXPECTED" ] && break
+            echo "attempt $i: registry serves $LIVE, waiting for $EXPECTED…"
+            sleep 10
+          done
           echo "expected=$EXPECTED  live=$LIVE"
           if [ "$LIVE" != "$EXPECTED" ]; then
             echo "::error::Registry still serves $LIVE, expected $EXPECTED."
