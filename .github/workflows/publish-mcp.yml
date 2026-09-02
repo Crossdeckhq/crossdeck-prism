@@ -1,0 +1,80 @@
+# Publish Prism to the official MCP Registry on a version tag.
+#
+# WHY THIS EXISTS: the registry entry drifted. The repo declared server.json
+# 0.4.0 while the registry still served 0.3.1 — and because the MCP aggregators
+# (glama, lobehub, mcpindex, rnwy, drio, syncdev, mcpapp-store …) harvest the
+# registry, every one of them was propagating a stale description. One un-run
+# manual publish silently degraded the whole long tail. Automating it is the
+# only way the registry cannot fall behind the repo again.
+#
+# AUTH: the `com.cross-deck/*` namespace is DNS-verified, not GitHub-owned, so
+# `login github-oidc` does not apply. Domain ownership is already proven by the
+# live TXT record on cross-deck.com:
+#   v=MCPv1; k=ed25519; p=yzWiE3GvmJzbCplMdumN74kpozHzSWlyOwAeKWnDL0g=
+# The matching Ed25519 PRIVATE key must be stored as the repository secret
+# MCP_REGISTRY_PRIVATE_KEY (64-char hex). Nothing else is required.
+name: Publish to MCP Registry
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch: {}
+
+concurrency:
+  group: publish-mcp
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish server.json
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fail early if the signing key is absent
+        env:
+          KEY: ${{ secrets.MCP_REGISTRY_PRIVATE_KEY }}
+        run: |
+          if [ -z "$KEY" ]; then
+            echo "::error::MCP_REGISTRY_PRIVATE_KEY is not set. Add the Ed25519 private key (64-char hex) matching the cross-deck.com TXT record as a repository secret."
+            exit 1
+          fi
+
+      # On a tag push, make server.json's version match the tag, so the
+      # registry can never disagree with the release that produced it.
+      - name: Sync server.json version to the tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          jq --arg v "$VERSION" '.version = $v' server.json > server.tmp && mv server.tmp server.json
+          echo "server.json version set to $VERSION"
+
+      - name: Install mcp-publisher
+        run: |
+          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+          chmod +x mcp-publisher
+
+      - name: Authenticate (DNS-verified namespace)
+        env:
+          KEY: ${{ secrets.MCP_REGISTRY_PRIVATE_KEY }}
+        run: ./mcp-publisher login dns --domain=cross-deck.com --private-key="$KEY"
+
+      - name: Publish
+        run: ./mcp-publisher publish
+
+      # Don't trust the exit code — confirm the registry actually serves the
+      # version we just pushed. (merged ≠ deployed; published ≠ live.)
+      - name: Verify the registry serves this version
+        run: |
+          EXPECTED=$(jq -r '.version' server.json)
+          sleep 10
+          LIVE=$(curl -fsSL "https://registry.modelcontextprotocol.io/v0/servers?search=com.cross-deck/prism" \
+            | jq -r '.servers[0].server.version // "none"')
+          echo "expected=$EXPECTED  live=$LIVE"
+          if [ "$LIVE" != "$EXPECTED" ]; then
+            echo "::error::Registry still serves $LIVE, expected $EXPECTED."
+            exit 1
+          fi
+          echo "Registry is serving $LIVE ✓"
